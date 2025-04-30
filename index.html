@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Alunos</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --success-color: #2ecc71;
+            --success-hover: #27ae60;
+            --danger-color: #e74c3c;
+            --danger-hover: #c0392b;
+            --light-gray: #f2f2f2;
+            --medium-gray: #ddd;
+            --dark-gray: #7f8c8d;
+            --text-color: #333;
+            --header-color: #2c3e50;
+            --white: #fff;
+            --error-bg: #fadbd8;
+            --success-bg: #d5f5e3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h1, h2 {
+            color: var(--header-color);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            padding: 12px 24px;
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        #search-input {
+            flex: 1;
+        }
+
+        .total-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--header-color);
+            background-color: var(--light-gray);
+            padding: 10px 15px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 15px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-style: italic;
+            color: var(--dark-gray);
+            font-size: 18px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .error {
+            color: var(--danger-color);
+            background-color: var(--error-bg);
+        }
+
+        .success {
+            color: var(--success-color);
+            background-color: var(--success-bg);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--dark-gray);
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Sistema de Gestão de Alunos</h1>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="card">
+                <h2 id="form-title">Cadastrar Novo Aluno</h2>
+                <div id="form-message" class="message hidden"></div>
+
+                <form id="aluno-form">
+                    <input type="hidden" id="aluno-id">
+
+                    <div class="form-group">
+                        <label for="nome_aluno" class="required-field">Nome Completo</label>
+                        <input type="text" id="nome_aluno" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rg" class="required-field">RG</label>
+                        <input type="text" id="rg" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data_nasc" class="required-field">Data de Nascimento</label>
+                        <input type="date" id="data_nasc" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nome_pai" class="required-field">Nome do Pai</label>
+                        <input type="text" id="nome_pai" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nome_mae" class="required-field">Nome da Mãe</label>
+                        <input type="text" id="nome_mae" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endereco" class="required-field">Endereço</label>
+                        <input type="text" id="endereco" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="escola" class="required-field">Escola</label>
+                        <select id="escola" required>
+                            <option value="">Selecione...</option>
+                            <option value="Estadual">Estadual</option>
+                            <option value="Municipal">Municipal</option>
+                            <option value="Orlando Soares">Orlando Soares</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="turno" class="required-field">Turno</label>
+                        <select id="turno" required>
+                            <option value="">Selecione...</option>
+                            <option value="Matutino">Matutino</option>
+                            <option value="Vespertino">Vespertino</option>
+                            <option value="Noturno">Noturno</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serie" class="required-field">Série</label>
+                        <input type="text" id="serie" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ref">Referência</label>
+                        <input type="text" id="ref">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="motorista">Motorista</label>
+                        <input type="text" id="motorista">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="obs">Observações</label>
+                        <textarea id="obs" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="submit-button" class="btn-success">Cadastrar Aluno</button>
+                        <button type="button" id="cancel-edit" class="btn-danger hidden">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="card">
+                <h2>Lista de Alunos</h2>
+
+                <div class="search-header">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Digite o nome do aluno...">
+                        <button id="search-button" class="btn-primary">Pesquisar</button>
+                        <button id="load-all-button" class="btn-primary">Todos</button>
+                    </div>
+                    <div id="result-count" class="total-count">0 alunos</div>
+                </div>
+
+                <div id="loading" class="loading hidden">Carregando dados...</div>
+                <div id="error-message" class="message error hidden"></div>
+
+                <div id="results-container">
+                    <table id="alunos-table" class="hidden">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Escola</th>
+                                <th>Turno</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alunos-tbody"></tbody>
+                    </table>
+                    <div id="no-results" class="loading hidden">Nenhum aluno encontrado.</div>
+                </div>
+
+                <div class="info-bar">
+                    <div id="timestamp"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const DOM = {
+            // Formulário
+            form: document.getElementById('aluno-form'),
+            formTitle: document.getElementById('form-title'),
+            formMessage: document.getElementById('form-message'),
+            alunoId: document.getElementById('aluno-id'),
+            submitButton: document.getElementById('submit-button'),
+            cancelEditButton: document.getElementById('cancel-edit'),
+
+            // Campos do formulário
+            nomeAluno: document.getElementById('nome_aluno'),
+            rg: document.getElementById('rg'),
+            dataNasc: document.getElementById('data_nasc'),
+            nomePai: document.getElementById('nome_pai'),
+            nomeMae: document.getElementById('nome_mae'),
+            endereco: document.getElementById('endereco'),
+            escola: document.getElementById('escola'),
+            turno: document.getElementById('turno'),
+            serie: document.getElementById('serie'),
+            ref: document.getElementById('ref'),
+            motorista: document.getElementById('motorista'),
+            obs: document.getElementById('obs'),
+
+            // Listagem
+            searchInput: document.getElementById('search-input'),
+            searchButton: document.getElementById('search-button'),
+            loadAllButton: document.getElementById('load-all-button'),
+            loading: document.getElementById('loading'),
+            errorMessage: document.getElementById('error-message'),
+            table: document.getElementById('alunos-table'),
+            tbody: document.getElementById('alunos-tbody'),
+            noResults: document.getElementById('no-results'),
+            timestamp: document.getElementById('timestamp')
+        };
+
+        // Estado da aplicação
+        const state = {
+            isEditing: false,
+            currentAlunos: []
+        };
+
+        // Funções auxiliares
+        function showLoading(show) {
+            DOM.loading.classList.toggle('hidden', !show);
+        }
+
+        function showMessage(element, message, type = 'error') {
+            element.textContent = message;
+            element.className = `message ${type}`;
+            element.classList.remove('hidden');
+
+            if (type !== 'error') {
+                setTimeout(() => element.classList.add('hidden'), 5000);
+            }
+        }
+
+        function resetForm() {
+            DOM.form.reset();
+            DOM.alunoId.value = '';
+            state.isEditing = false;
+            DOM.formTitle.textContent = 'Cadastrar Novo Aluno';
+            DOM.submitButton.textContent = 'Cadastrar Aluno';
+            DOM.cancelEditButton.classList.add('hidden');
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Operações CRUD
+        async function createAluno(alunoData) {
+            try {
+                const response = await fetch('http://localhost:5000/aluno', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(alunoData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.erro || 'Erro ao criar aluno');
+                }
+
+                showMessage(DOM.formMessage, 'Aluno cadastrado com sucesso!', 'success');
+                resetForm();
+                fetchAllAlunos();
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao criar aluno:', error);
+            }
+        }
+
+        async function updateAluno(id, alunoData) {
+            try {
+                const response = await fetch(`http://localhost:5000/aluno/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(alunoData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.erro || 'Erro ao atualizar aluno');
+                }
+
+                showMessage(DOM.formMessage, 'Aluno atualizado com sucesso!', 'success');
+                resetForm();
+                fetchAllAlunos();
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao atualizar aluno:', error);
+            }
+        }
+
+        async function deleteAluno(id) {
+            if (!confirm('Tem certeza que deseja excluir este aluno?')) return;
+
+            try {
+                const response = await fetch(`http://localhost:5000/aluno/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao excluir aluno');
+                }
+
+                showMessage(DOM.errorMessage, 'Aluno excluído com sucesso!', 'success');
+                fetchAllAlunos();
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao excluir aluno:', error);
+            }
+        }
+
+        async function fetchAllAlunos() {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch('http://localhost:5000/alunos');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao carregar alunos');
+                }
+
+                state.currentAlunos = data.data;
+                renderAlunos(data.data);
+
+                // Atualiza o timestamp se existir
+                if (data.timestamp) {
+                    const date = new Date(data.timestamp);
+                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
+                }
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao carregar alunos:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function searchAlunos(nome) {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch('http://localhost:5000/alunos/pesquisar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ nome: nome })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro na pesquisa');
+                }
+
+                state.currentAlunos = data.resultados;
+                renderAlunos(data.resultados);
+                DOM.searchInput.value = ''; // Limpa o campo de pesquisa
+
+                if (data.timestamp) {
+                    const date = new Date(data.timestamp);
+                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
+                }
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro na pesquisa:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderAlunos(alunos) {
+            DOM.tbody.innerHTML = '';
+
+            if (alunos.length === 0) {
+                DOM.noResults.classList.remove('hidden');
+                DOM.table.classList.add('hidden');
+                document.getElementById('result-count').textContent = '0 alunos';
+                return;
+            }
+
+            DOM.noResults.classList.add('hidden');
+            DOM.table.classList.remove('hidden');
+
+            alunos.forEach(aluno => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${aluno.id}</td>
+                    <td>${aluno.nome_aluno}</td>
+                    <td>${aluno.escola}</td>
+                    <td>${aluno.turno}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn btn-primary edit-btn" data-id="${aluno.id}">Editar</button>
+                        <button class="action-btn btn-danger delete-btn" data-id="${aluno.id}">Excluir</button>
+                    </td>
+                `;
+                DOM.tbody.appendChild(row);
+            });
+
+            // Atualiza contagem
+            document.getElementById('result-count').textContent = `${alunos.length} aluno${alunos.length !== 1 ? 's' : ''}`;
+
+            // Adiciona eventos aos botões
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editAluno(btn.dataset.id));
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteAluno(btn.dataset.id));
+            });
+        }
+
+        async function editAluno(id) {
+            try {
+                showLoading(true);
+
+                // Encontra o aluno na lista atual
+                const aluno = state.currentAlunos.find(a => a.id == id);
+
+                if (!aluno) {
+                    throw new Error('Aluno não encontrado');
+                }
+
+                // Preenche o formulário
+                DOM.alunoId.value = aluno.id;
+                DOM.nomeAluno.value = aluno.nome_aluno || '';
+                DOM.rg.value = aluno.rg || '';
+                DOM.dataNasc.value = aluno.data_nasc ? aluno.data_nasc.split('T')[0] : '';
+                DOM.nomePai.value = aluno.nome_pai || '';
+                DOM.nomeMae.value = aluno.nome_mae || '';
+                DOM.endereco.value = aluno.endereco || '';
+                DOM.escola.value = aluno.escola || '';
+                DOM.turno.value = aluno.turno || '';
+                DOM.serie.value = aluno.serie || '';
+                DOM.ref.value = aluno.ref || '';
+                DOM.motorista.value = aluno.motorista || '';
+                DOM.obs.value = aluno.obs || '';
+
+                // Ativa modo edição
+                state.isEditing = true;
+                DOM.formTitle.textContent = 'Editar Aluno';
+                DOM.submitButton.textContent = 'Atualizar Aluno';
+                DOM.cancelEditButton.classList.remove('hidden');
+
+                // Rolagem suave
+                document.querySelector('.left-panel').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao carregar aluno:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Event Listeners
+        DOM.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const alunoData = {
+                nome_aluno: DOM.nomeAluno.value,
+                rg: DOM.rg.value,
+                data_nasc: DOM.dataNasc.value,
+                nome_pai: DOM.nomePai.value,
+                nome_mae: DOM.nomeMae.value,
+                endereco: DOM.endereco.value,
+                escola: DOM.escola.value,
+                turno: DOM.turno.value,
+                serie: DOM.serie.value,
+                ref: DOM.ref.value || undefined,
+                motorista: DOM.motorista.value || undefined,
+                obs: DOM.obs.value || undefined
+            };
+
+            if (state.isEditing) {
+                await updateAluno(DOM.alunoId.value, alunoData);
+            } else {
+                await createAluno(alunoData);
+            }
+        });
+
+        DOM.cancelEditButton.addEventListener('click', resetForm);
+
+        DOM.searchButton.addEventListener('click', () => {
+            const searchTerm = DOM.searchInput.value.trim();
+            if (searchTerm) {
+                searchAlunos(searchTerm);
+            } else {
+                showMessage(DOM.errorMessage, 'Digite um nome para pesquisar');
+            }
+        });
+
+        DOM.loadAllButton.addEventListener('click', fetchAllAlunos);
+
+        DOM.searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = DOM.searchInput.value.trim();
+                if (searchTerm) {
+                    searchAlunos(searchTerm);
+                } else {
+                    showMessage(DOM.errorMessage, 'Digite um nome para pesquisar');
+                }
+            }
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAllAlunos();
+
+            // Foco no campo de nome ao carregar
+            DOM.nomeAluno.focus();
+        });
+    </script>
+</body>
+</html>
