@@ -151,8 +151,9 @@
             min-width: 300px;
         }
 
-        #search-input {
+        .search-field {
             flex: 1;
+            min-width: 200px;
         }
 
         .total-count {
@@ -348,9 +349,15 @@
 
                 <div class="search-header">
                     <div class="search-container">
-                        <input type="text" id="search-input" placeholder="Digite o nome do aluno...">
-                        <button id="search-button" class="btn-primary">Pesquisar</button>
-                        <button id="load-all-button" class="btn-primary">Todos</button>
+                        <input type="text" id="aluno-search-input" class="search-field" placeholder="Nome do aluno...">
+                        <button id="aluno-search-button" class="btn-primary">Buscar Aluno</button>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" id="motorista-search-input" class="search-field" placeholder="Nome do motorista...">
+                        <button id="motorista-search-button" class="btn-primary">Buscar alunos por motorista</button>
+                    </div>
+                    <div class="search-container">
+                        <button id="show-all-button" class="btn-primary">Mostrar Todos</button>
                     </div>
                     <div id="result-count" class="total-count">0 alunos</div>
                 </div>
@@ -364,8 +371,12 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Nome</th>
+                                <th>RG</th>
+                                <th>Nascimento</th>
                                 <th>Escola</th>
+                                <th>Série</th>
                                 <th>Turno</th>
+                                <th>Motorista</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -407,15 +418,18 @@
             obs: document.getElementById('obs'),
 
             // Listagem
-            searchInput: document.getElementById('search-input'),
-            searchButton: document.getElementById('search-button'),
-            loadAllButton: document.getElementById('load-all-button'),
+            alunoSearchInput: document.getElementById('aluno-search-input'),
+            alunoSearchButton: document.getElementById('aluno-search-button'),
+            motoristaSearchInput: document.getElementById('motorista-search-input'),
+            motoristaSearchButton: document.getElementById('motorista-search-button'),
+            showAllButton: document.getElementById('show-all-button'),
             loading: document.getElementById('loading'),
             errorMessage: document.getElementById('error-message'),
             table: document.getElementById('alunos-table'),
             tbody: document.getElementById('alunos-tbody'),
             noResults: document.getElementById('no-results'),
-            timestamp: document.getElementById('timestamp')
+            timestamp: document.getElementById('timestamp'),
+            alunosContainer: document.getElementById('results-container')
         };
 
         // Estado da aplicação
@@ -542,7 +556,6 @@
                 state.currentAlunos = data.data;
                 renderAlunos(data.data);
 
-                // Atualiza o timestamp se existir
                 if (data.timestamp) {
                     const date = new Date(data.timestamp);
                     DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
@@ -555,7 +568,7 @@
             }
         }
 
-        async function searchAlunos(nome) {
+        async function searchAlunosPorNome(nome) {
             try {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
@@ -571,12 +584,12 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Erro na pesquisa');
+                    throw new Error(data.message || 'Erro na pesquisa por nome');
                 }
 
                 state.currentAlunos = data.resultados;
                 renderAlunos(data.resultados);
-                DOM.searchInput.value = ''; // Limpa o campo de pesquisa
+                DOM.alunoSearchInput.value = '';
 
                 if (data.timestamp) {
                     const date = new Date(data.timestamp);
@@ -584,7 +597,35 @@
                 }
             } catch (error) {
                 showMessage(DOM.errorMessage, error.message);
-                console.error('Erro na pesquisa:', error);
+                console.error('Erro na pesquisa por nome:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function searchAlunosPorMotorista(nomeMotorista) {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch(`http://localhost:5000/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao buscar alunos por motorista');
+                }
+
+                state.currentAlunos = data.data;
+                renderAlunos(data.data);
+                DOM.motoristaSearchInput.value = '';
+
+                if (data.timestamp) {
+                    const date = new Date(data.timestamp);
+                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
+                }
+            } catch (error) {
+                showMessage(DOM.errorMessage, error.message);
+                console.error('Erro ao buscar alunos por motorista:', error);
             } finally {
                 showLoading(false);
             }
@@ -608,8 +649,12 @@
                 row.innerHTML = `
                     <td>${aluno.id}</td>
                     <td>${aluno.nome_aluno}</td>
+                    <td>${aluno.rg || '-'}</td>
+                    <td>${formatDate(aluno.data_nasc)}</td>
                     <td>${aluno.escola}</td>
+                    <td>${aluno.serie}</td>
                     <td>${aluno.turno}</td>
+                    <td>${aluno.motorista || '-'}</td>
                     <td class="action-buttons">
                         <button class="action-btn btn-primary edit-btn" data-id="${aluno.id}">Editar</button>
                         <button class="action-btn btn-danger delete-btn" data-id="${aluno.id}">Excluir</button>
@@ -618,10 +663,8 @@
                 DOM.tbody.appendChild(row);
             });
 
-            // Atualiza contagem
             document.getElementById('result-count').textContent = `${alunos.length} aluno${alunos.length !== 1 ? 's' : ''}`;
 
-            // Adiciona eventos aos botões
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editAluno(btn.dataset.id));
             });
@@ -635,14 +678,12 @@
             try {
                 showLoading(true);
 
-                // Encontra o aluno na lista atual
                 const aluno = state.currentAlunos.find(a => a.id == id);
 
                 if (!aluno) {
                     throw new Error('Aluno não encontrado');
                 }
 
-                // Preenche o formulário
                 DOM.alunoId.value = aluno.id;
                 DOM.nomeAluno.value = aluno.nome_aluno || '';
                 DOM.rg.value = aluno.rg || '';
@@ -657,13 +698,11 @@
                 DOM.motorista.value = aluno.motorista || '';
                 DOM.obs.value = aluno.obs || '';
 
-                // Ativa modo edição
                 state.isEditing = true;
                 DOM.formTitle.textContent = 'Editar Aluno';
                 DOM.submitButton.textContent = 'Atualizar Aluno';
                 DOM.cancelEditButton.classList.remove('hidden');
 
-                // Rolagem suave
                 document.querySelector('.left-panel').scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
@@ -705,33 +744,51 @@
 
         DOM.cancelEditButton.addEventListener('click', resetForm);
 
-        DOM.searchButton.addEventListener('click', () => {
-            const searchTerm = DOM.searchInput.value.trim();
+        DOM.alunoSearchButton.addEventListener('click', () => {
+            const searchTerm = DOM.alunoSearchInput.value.trim();
             if (searchTerm) {
-                searchAlunos(searchTerm);
+                searchAlunosPorNome(searchTerm);
             } else {
-                showMessage(DOM.errorMessage, 'Digite um nome para pesquisar');
+                showMessage(DOM.errorMessage, 'Digite um nome de aluno para pesquisar');
             }
         });
 
-        DOM.loadAllButton.addEventListener('click', fetchAllAlunos);
+        DOM.motoristaSearchButton.addEventListener('click', () => {
+            const searchTerm = DOM.motoristaSearchInput.value.trim();
+            if (searchTerm) {
+                searchAlunosPorMotorista(searchTerm);
+            } else {
+                showMessage(DOM.errorMessage, 'Digite um nome de motorista para pesquisar');
+            }
+        });
 
-        DOM.searchInput.addEventListener('keypress', (e) => {
+        DOM.showAllButton.addEventListener('click', fetchAllAlunos);
+
+        DOM.alunoSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const searchTerm = DOM.searchInput.value.trim();
+                const searchTerm = DOM.alunoSearchInput.value.trim();
                 if (searchTerm) {
-                    searchAlunos(searchTerm);
+                    searchAlunosPorNome(searchTerm);
                 } else {
-                    showMessage(DOM.errorMessage, 'Digite um nome para pesquisar');
+                    showMessage(DOM.errorMessage, 'Digite um nome de aluno para pesquisar');
+                }
+            }
+        });
+
+        DOM.motoristaSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = DOM.motoristaSearchInput.value.trim();
+                if (searchTerm) {
+                    searchAlunosPorMotorista(searchTerm);
+                } else {
+                    showMessage(DOM.errorMessage, 'Digite um nome de motorista para pesquisar');
                 }
             }
         });
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
-            fetchAllAlunos();
-
-            // Foco no campo de nome ao carregar
+            fetchAllAlunos(); // Carrega todos os alunos ao iniciar
             DOM.nomeAluno.focus();
         });
     </script>
