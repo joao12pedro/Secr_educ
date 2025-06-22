@@ -1,6 +1,8 @@
+const API_BASE = 'https://secr-educ.onrender.com';
+
 async function fetchAlunos() {
     try {
-        const response = await fetch('http://localhost:5000/alunos', {
+        const response = await fetch(`${API_BASE}/alunos`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -32,7 +34,7 @@ async function fetchAlunos() {
 
 async function fetchAlunosPorMotorista(nomeMotorista) {
     try {
-        const response = await fetch(`http://localhost:5000/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+        const response = await fetch(`${API_BASE}/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -79,7 +81,7 @@ async function carregarAlunos() {
                     <td>${aluno.id || '-'}</td>
                     <td>${aluno.nome_aluno || '-'}</td>
                     <td>${aluno.rg || '-'}</td>
-                    <td>${formatarData(aluno.data_nasc) || '-'}</td>
+                    <td>${formatarData(aluno.data_nasc)}</td>
                     <td>${aluno.escola || '-'}</td>
                     <td>${aluno.serie || '-'}</td>
                     <td>${aluno.turno || '-'}</td>
@@ -102,7 +104,6 @@ async function carregarAlunos() {
     }
 }
 
-// Adicione esta função para carregar alunos por motorista
 async function carregarAlunosPorMotorista() {
     const motoristaInput = document.getElementById('motorista-search-input');
     const nomeMotorista = motoristaInput.value.trim();
@@ -125,7 +126,7 @@ async function carregarAlunosPorMotorista() {
                     <td>${aluno.id || '-'}</td>
                     <td>${aluno.nome_aluno || '-'}</td>
                     <td>${aluno.rg || '-'}</td>
-                    <td>${formatarData(aluno.data_nasc) || '-'}</td>
+                    <td>${formatarData(aluno.data_nasc)}</td>
                     <td>${aluno.escola || '-'}</td>
                     <td>${aluno.serie || '-'}</td>
                     <td>${aluno.turno || '-'}</td>
