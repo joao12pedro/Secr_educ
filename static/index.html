@@ -354,7 +354,7 @@
                     </div>
                     <div class="search-container">
                         <input type="text" id="motorista-search-input" class="search-field" placeholder="Nome do motorista...">
-                        <button id="motorista-search-button" class="btn-primary">Buscar alunos por motorista</button>
+                        <button id="motorista-search-button" class="btn-primary">Buscar Motorista</button>
                     </div>
                     <div class="search-container">
                         <button id="show-all-button" class="btn-primary">Mostrar Todos</button>
@@ -393,6 +393,9 @@
     </div>
 
     <script>
+        // Configurações da API - URL do Render
+        const API_BASE_URL = 'https://secr-educ.onrender.com';
+        
         // Elementos DOM
         const DOM = {
             // Formulário
@@ -464,105 +467,99 @@
 
         function formatDate(dateString) {
             if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR');
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('pt-BR');
+            } catch {
+                return dateString;
+            }
+        }
+
+        function updateTimestamp(timestamp) {
+            try {
+                const date = new Date(timestamp);
+                DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
+            } catch {
+                DOM.timestamp.textContent = `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+            }
+        }
+
+        // Função para verificar se a API está respondendo
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health-check`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                return response.ok;
+            } catch (error) {
+                console.error('Erro ao conectar com a API:', error);
+                return false;
+            }
+        }
+
+        // Tratamento de erros aprimorado
+        function handleAPIError(error) {
+            console.error('Erro na API:', error);
+            
+            let errorMessage = 'Erro ao conectar com o servidor';
+            
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = `
+                    Não foi possível conectar ao servidor. Verifique:
+                    1. Sua conexão com a internet
+                    2. Se o serviço está online no Render
+                    3. A URL da API: ${API_BASE_URL}
+                `;
+            } else if (error.message.includes('504')) {
+                errorMessage = 'O servidor está demorando para responder (Timeout). Tente novamente em alguns segundos.';
+            } else {
+                errorMessage = error.message;
+            }
+            
+            showMessage(DOM.errorMessage, errorMessage);
         }
 
         // Operações CRUD
-        async function createAluno(alunoData) {
-            try {
-                const response = await fetch('http://localhost:5000/aluno', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(alunoData)
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.erro || 'Erro ao criar aluno');
-                }
-
-                showMessage(DOM.formMessage, 'Aluno cadastrado com sucesso!', 'success');
-                resetForm();
-                fetchAllAlunos();
-            } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao criar aluno:', error);
-            }
-        }
-
-        async function updateAluno(id, alunoData) {
-            try {
-                const response = await fetch(`http://localhost:5000/aluno/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(alunoData)
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.erro || 'Erro ao atualizar aluno');
-                }
-
-                showMessage(DOM.formMessage, 'Aluno atualizado com sucesso!', 'success');
-                resetForm();
-                fetchAllAlunos();
-            } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao atualizar aluno:', error);
-            }
-        }
-
-        async function deleteAluno(id) {
-            if (!confirm('Tem certeza que deseja excluir este aluno?')) return;
-
-            try {
-                const response = await fetch(`http://localhost:5000/aluno/${id}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Erro ao excluir aluno');
-                }
-
-                showMessage(DOM.errorMessage, 'Aluno excluído com sucesso!', 'success');
-                fetchAllAlunos();
-            } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao excluir aluno:', error);
-            }
-        }
-
         async function fetchAllAlunos() {
             try {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch('http://localhost:5000/alunos');
-                const data = await response.json();
+                // Verificação de status da API
+                const isAPIReady = await checkAPIStatus();
+                if (!isAPIReady) {
+                    throw new Error('Servidor está iniciando, aguarde alguns instantes...');
+                }
 
+                const response = await fetch(`${API_BASE_URL}/alunos`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-store'
+                });
+                
+                // Tratamento de erros de resposta
                 if (!response.ok) {
-                    throw new Error(data.message || 'Erro ao carregar alunos');
+                    const errorText = await response.text();
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        throw new Error(errorData.message || `Erro ${response.status}`);
+                    } catch {
+                        throw new Error(`Erro ${response.status}: ${errorText}`);
+                    }
                 }
 
-                state.currentAlunos = data.data;
-                renderAlunos(data.data);
+                const data = await response.json();
+                state.currentAlunos = data.data || data;
+                renderAlunos(state.currentAlunos);
+                updateTimestamp(data.timestamp || new Date().toISOString());
 
-                if (data.timestamp) {
-                    const date = new Date(data.timestamp);
-                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
-                }
             } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao carregar alunos:', error);
+                handleAPIError(error);
             } finally {
                 showLoading(false);
             }
@@ -573,7 +570,7 @@
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch('http://localhost:5000/alunos/pesquisar', {
+                const response = await fetch(`${API_BASE_URL}/alunos/pesquisar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -581,23 +578,18 @@
                     body: JSON.stringify({ nome: nome })
                 });
 
-                const data = await response.json();
-
                 if (!response.ok) {
-                    throw new Error(data.message || 'Erro na pesquisa por nome');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Erro na pesquisa por nome');
                 }
 
-                state.currentAlunos = data.resultados;
-                renderAlunos(data.resultados);
-                DOM.alunoSearchInput.value = '';
+                const data = await response.json();
+                state.currentAlunos = data.resultados || data.data || [];
+                renderAlunos(state.currentAlunos);
+                updateTimestamp(data.timestamp || new Date().toISOString());
 
-                if (data.timestamp) {
-                    const date = new Date(data.timestamp);
-                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
-                }
             } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro na pesquisa por nome:', error);
+                handleAPIError(error);
             } finally {
                 showLoading(false);
             }
@@ -608,24 +600,101 @@
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`http://localhost:5000/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+                const response = await fetch(`${API_BASE_URL}/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Erro na pesquisa por motorista');
+                }
+
                 const data = await response.json();
+                state.currentAlunos = data.data || [];
+                renderAlunos(state.currentAlunos);
+                updateTimestamp(data.timestamp || new Date().toISOString());
+
+            } catch (error) {
+                handleAPIError(error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function createAluno(alunoData) {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch(`${API_BASE_URL}/aluno`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(alunoData)
+                });
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Erro ao buscar alunos por motorista');
+                    const errorData = await response.json();
+                    throw new Error(errorData.erro || 'Erro ao criar aluno');
                 }
 
-                state.currentAlunos = data.data;
-                renderAlunos(data.data);
-                DOM.motoristaSearchInput.value = '';
-
-                if (data.timestamp) {
-                    const date = new Date(data.timestamp);
-                    DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
-                }
+                showMessage(DOM.formMessage, 'Aluno cadastrado com sucesso!', 'success');
+                resetForm();
+                await fetchAllAlunos();
             } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao buscar alunos por motorista:', error);
+                handleAPIError(error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function updateAluno(id, alunoData) {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(alunoData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.erro || 'Erro ao atualizar aluno');
+                }
+
+                showMessage(DOM.formMessage, 'Aluno atualizado com sucesso!', 'success');
+                resetForm();
+                await fetchAllAlunos();
+            } catch (error) {
+                handleAPIError(error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteAluno(id) {
+            if (!confirm('Tem certeza que deseja excluir este aluno?')) return;
+
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Erro ao excluir aluno');
+                }
+
+                showMessage(DOM.errorMessage, 'Aluno excluído com sucesso!', 'success');
+                await fetchAllAlunos();
+            } catch (error) {
+                handleAPIError(error);
             } finally {
                 showLoading(false);
             }
@@ -634,7 +703,7 @@
         function renderAlunos(alunos) {
             DOM.tbody.innerHTML = '';
 
-            if (alunos.length === 0) {
+            if (!alunos || alunos.length === 0) {
                 DOM.noResults.classList.remove('hidden');
                 DOM.table.classList.add('hidden');
                 document.getElementById('result-count').textContent = '0 alunos';
@@ -647,13 +716,13 @@
             alunos.forEach(aluno => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${aluno.id}</td>
-                    <td>${aluno.nome_aluno}</td>
+                    <td>${aluno.id || '-'}</td>
+                    <td>${aluno.nome_aluno || aluno.nome || '-'}</td>
                     <td>${aluno.rg || '-'}</td>
-                    <td>${formatDate(aluno.data_nasc)}</td>
-                    <td>${aluno.escola}</td>
-                    <td>${aluno.serie}</td>
-                    <td>${aluno.turno}</td>
+                    <td>${formatDate(aluno.data_nasc || aluno.data_nascimento)}</td>
+                    <td>${aluno.escola || '-'}</td>
+                    <td>${aluno.serie || '-'}</td>
+                    <td>${aluno.turno || '-'}</td>
                     <td>${aluno.motorista || '-'}</td>
                     <td class="action-buttons">
                         <button class="action-btn btn-primary edit-btn" data-id="${aluno.id}">Editar</button>
@@ -665,6 +734,7 @@
 
             document.getElementById('result-count').textContent = `${alunos.length} aluno${alunos.length !== 1 ? 's' : ''}`;
 
+            // Adiciona eventos aos botões de ação
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editAluno(btn.dataset.id));
             });
@@ -678,14 +748,18 @@
             try {
                 showLoading(true);
 
-                const aluno = state.currentAlunos.find(a => a.id == id);
-
+                // Encontra o aluno na lista atual ou busca da API se necessário
+                let aluno = state.currentAlunos.find(a => a.id == id);
+                
                 if (!aluno) {
-                    throw new Error('Aluno não encontrado');
+                    const response = await fetch(`${API_BASE_URL}/aluno/${id}`);
+                    if (!response.ok) throw new Error('Aluno não encontrado');
+                    aluno = await response.json();
                 }
 
+                // Preenche o formulário
                 DOM.alunoId.value = aluno.id;
-                DOM.nomeAluno.value = aluno.nome_aluno || '';
+                DOM.nomeAluno.value = aluno.nome_aluno || aluno.nome || '';
                 DOM.rg.value = aluno.rg || '';
                 DOM.dataNasc.value = aluno.data_nasc ? aluno.data_nasc.split('T')[0] : '';
                 DOM.nomePai.value = aluno.nome_pai || '';
@@ -698,19 +772,20 @@
                 DOM.motorista.value = aluno.motorista || '';
                 DOM.obs.value = aluno.obs || '';
 
+                // Ativa modo edição
                 state.isEditing = true;
                 DOM.formTitle.textContent = 'Editar Aluno';
                 DOM.submitButton.textContent = 'Atualizar Aluno';
                 DOM.cancelEditButton.classList.remove('hidden');
 
+                // Rolagem suave para o formulário
                 document.querySelector('.left-panel').scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
 
             } catch (error) {
-                showMessage(DOM.errorMessage, error.message);
-                console.error('Erro ao carregar aluno:', error);
+                handleAPIError(error);
             } finally {
                 showLoading(false);
             }
@@ -786,10 +861,31 @@
             }
         });
 
+        // Mantém o serviço ativo (para plano gratuito)
+        setInterval(async () => {
+            try {
+                await fetch(`${API_BASE_URL}/health-check`, {
+                    method: 'HEAD'
+                });
+            } catch (error) {
+                console.log('Ping para manter serviço ativo falhou:', error);
+            }
+        }, 4 * 60 * 1000); // A cada 4 minutos
+
         // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAllAlunos(); // Carrega todos os alunos ao iniciar
-            DOM.nomeAluno.focus();
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Ping inicial para ativar o serviço se estiver inativo
+                await fetch(`${API_BASE_URL}/health-check`).catch(() => {});
+                
+                // Aguarda 2 segundos para o serviço iniciar
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                await fetchAllAlunos();
+                DOM.nomeAluno.focus();
+            } catch (error) {
+                handleAPIError(error);
+            }
         });
     </script>
 </body>
