@@ -251,3 +251,7 @@ def deletar_aluno(id):
             'error_details': str(e),
             'timestamp': datetime.now().isoformat()
         }), 500
+    
+@aluno_bp.route('/health-check')
+def health_check():
+    return {'status': 'ok'}, 200
