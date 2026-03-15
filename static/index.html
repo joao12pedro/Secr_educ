@@ -491,86 +491,105 @@ const ENDPOINTS = {
             }
         }
 
-        // Função para verificar se a API está respondendo
-        async function checkAPIStatus() {
+       // Função melhorada para verificar status da API
+async function checkAPIStatus() {
+    try {
+        // Tenta endpoints comuns de health check
+        const endpointsToTry = ['/health', '/health-check', '/status', '/'];
+        
+        for (const endpoint of endpointsToTry) {
             try {
-                const response = await fetch(`${API_BASE_URL}/health-check`, {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                return response.ok;
-            } catch (error) {
-                console.error('Erro ao conectar com a API:', error);
-                return false;
-            }
-        }
-
-        // Tratamento de erros aprimorado
-        function handleAPIError(error) {
-            console.error('Erro na API:', error);
-            
-            let errorMessage = 'Erro ao conectar com o servidor';
-            
-            if (error.message.includes('Failed to fetch')) {
-                errorMessage = `
-                    Não foi possível conectar ao servidor. Verifique:
-                    1. Sua conexão com a internet
-                    2. Se o serviço está online no Render
-                    3. A URL da API: ${API_BASE_URL}
-                `;
-            } else if (error.message.includes('504')) {
-                errorMessage = 'O servidor está demorando para responder (Timeout). Tente novamente em alguns segundos.';
-            } else {
-                errorMessage = error.message;
-            }
-            
-            showMessage(DOM.errorMessage, errorMessage);
-        }
-
-        // Operações CRUD
-        async function fetchAllAlunos() {
-            try {
-                showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
-
-                // Verificação de status da API
-                const isAPIReady = await checkAPIStatus();
-                if (!isAPIReady) {
-                    throw new Error('Servidor está iniciando, aguarde alguns instantes...');
-                }
-
-                const response = await fetch(`${API_BASE_URL}/alunos`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    cache: 'no-store'
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000 // 5 segundos de timeout
                 });
                 
-                // Tratamento de erros de resposta
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        throw new Error(errorData.message || `Erro ${response.status}`);
-                    } catch {
-                        throw new Error(`Erro ${response.status}: ${errorText}`);
-                    }
+                if (response.ok) {
+                    console.log(`API respondendo em: ${endpoint}`);
+                    return true;
                 }
-
-                const data = await response.json();
-                state.currentAlunos = data.data || data;
-                renderAlunos(state.currentAlunos);
-                updateTimestamp(data.timestamp || new Date().toISOString());
-
-            } catch (error) {
-                handleAPIError(error);
-            } finally {
-                showLoading(false);
+            } catch (e) {
+                // Continua tentando outros endpoints
+                console.log(`Endpoint ${endpoint} não disponível`);
             }
         }
+        
+        // Se nenhum endpoint de health funcionar, tenta o endpoint principal
+        const mainResponse = await fetch(`${API_BASE_URL}${ENDPOINTS.alunos}`, {
+            method: 'HEAD',
+            timeout: 5000
+        }).catch(() => null);
+        
+        return mainResponse !== null;
+        
+    } catch (error) {
+        console.error('Erro ao conectar com a API:', error);
+        return false;
+    }
+}
+
+// Função aprimorada para lidar com timeout
+async function fetchWithTimeout(resource, options = {}) {
+    const { timeout = 8000 } = options;
+    
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
+// Inicialização melhorada
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        showLoading(true);
+        
+        // Mensagem amigável enquanto tenta conectar
+        showMessage(DOM.errorMessage, 
+            'Conectando ao servidor... Isso pode levar alguns segundos se o serviço estiver iniciando.', 
+            'success');
+        
+        // Tenta conectar com a API
+        const isAPIAvailable = await checkAPIStatus();
+        
+        if (!isAPIAvailable) {
+            showMessage(DOM.errorMessage, 
+                'O servidor está iniciando. Aguarde alguns instantes e tente novamente.\n' +
+                'Em servidores gratuitos do Render, a primeira requisição pode levar até 60 segundos.', 
+                'error');
+            
+            // Tenta novamente após 5 segundos
+            setTimeout(async () => {
+                try {
+                    await fetchAllAlunos();
+                } catch (retryError) {
+                    console.log('Tentativa de reconexão falhou:', retryError);
+                }
+            }, 5000);
+            
+            return;
+        }
+        
+        // Se conseguiu conectar, busca os dados
+        await fetchAllAlunos();
+        DOM.nomeAluno.focus();
+        
+    } catch (error) {
+        handleAPIError(error);
+    } finally {
+        showLoading(false);
+    }
+});
 
         async function searchAlunosPorNome(nome) {
             try {
