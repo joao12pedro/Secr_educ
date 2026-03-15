@@ -393,9 +393,16 @@
     </div>
 
     <script>
-        // Configurações da API - URL do Render
         const API_BASE_URL = 'https://secr-educ.onrender.com';
-        
+
+// Endpoints da API (ajuste conforme sua estrutura real)
+const ENDPOINTS = {
+    alunos: '/alunos',
+    aluno: '/aluno',
+    pesquisar: '/alunos/pesquisar',
+    motorista: '/alunos/motorista',
+    health: '/health'  // Mudei de /health-check para /health
+};
         // Elementos DOM
         const DOM = {
             // Formulário
