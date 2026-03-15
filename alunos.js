@@ -1,8 +1,16 @@
 const API_BASE = 'https://secr-educ.onrender.com';
 
+const ENDPOINTS = {
+    alunos: '/alunos',
+    aluno: '/aluno',
+    pesquisar: '/alunos/pesquisar',
+    motorista: '/alunos/motorista',
+    health: '/health-check'
+};
+
 async function fetchAlunos() {
     try {
-        const response = await fetch(`${API_BASE}/alunos`, {
+        const response = await fetch(`${API_BASE}${ENDPOINTS.alunos}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -10,16 +18,16 @@ async function fetchAlunos() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro ao buscar alunos');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Erro ${response.status}`);
         }
 
         const data = await response.json();
 
         return {
             success: true,
-            count: data.count,
-            alunos: data.data,
+            count: data.count || (data.data ? data.data.length : 0),
+            alunos: data.data || data || [],
             timestamp: data.timestamp
         };
 
@@ -34,7 +42,7 @@ async function fetchAlunos() {
 
 async function fetchAlunosPorMotorista(nomeMotorista) {
     try {
-        const response = await fetch(`${API_BASE}/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+        const response = await fetch(`${API_BASE}${ENDPOINTS.motorista}/${encodeURIComponent(nomeMotorista)}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -43,8 +51,8 @@ async function fetchAlunosPorMotorista(nomeMotorista) {
 
         return {
             success: true,
-            count: data.count,
-            alunos: data.data,
+            count: data.count || (data.data ? data.data.length : 0),
+            alunos: data.data || [],
             timestamp: data.timestamp
         };
     } catch (error) {
@@ -58,93 +66,71 @@ async function fetchAlunosPorMotorista(nomeMotorista) {
 
 function formatarData(dataString) {
     if (!dataString) return '-';
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR');
+    try {
+        const data = new Date(dataString);
+        return data.toLocaleDateString('pt-BR');
+    } catch {
+        return dataString;
+    }
 }
 
-async function carregarAlunos() {
+// Função para ser chamada pelo HTML se usar o arquivo separado
+window.carregarAlunos = async function() {
     const loadingElement = document.getElementById('loading');
-    const errorContainer = document.getElementById('error-container');
+    const errorContainer = document.getElementById('error-message');
     const alunosContainer = document.getElementById('alunos-container');
     const tbody = document.getElementById('alunos-tbody');
     const timestampElement = document.getElementById('timestamp');
 
+    if (!loadingElement || !tbody) return;
+
     try {
+        if (loadingElement) loadingElement.style.display = 'block';
+        
         const resultado = await fetchAlunos();
 
         if (resultado.success) {
-            loadingElement.style.display = 'none';
-            alunosContainer.style.display = 'block';
+            if (loadingElement) loadingElement.style.display = 'none';
+            
+            if (alunosContainer) alunosContainer.style.display = 'block';
 
-            tbody.innerHTML = resultado.alunos.map(aluno =>
-                `<tr>
-                    <td>${aluno.id || '-'}</td>
-                    <td>${aluno.nome_aluno || '-'}</td>
-                    <td>${aluno.rg || '-'}</td>
-                    <td>${formatarData(aluno.data_nasc)}</td>
-                    <td>${aluno.escola || '-'}</td>
-                    <td>${aluno.serie || '-'}</td>
-                    <td>${aluno.turno || '-'}</td>
-                </tr>`
-            ).join('');
+            if (tbody) {
+                tbody.innerHTML = resultado.alunos.map(aluno =>
+                    `<tr>
+                        <td>${aluno.id || '-'}</td>
+                        <td>${aluno.nome_aluno || '-'}</td>
+                        <td>${aluno.rg || '-'}</td>
+                        <td>${formatarData(aluno.data_nasc)}</td>
+                        <td>${aluno.escola || '-'}</td>
+                        <td>${aluno.serie || '-'}</td>
+                        <td>${aluno.turno || '-'}</td>
+                    </tr>`
+                ).join('');
+            }
 
-            if (resultado.timestamp) {
+            if (resultado.timestamp && timestampElement) {
                 const dataAtualizacao = new Date(resultado.timestamp);
                 timestampElement.textContent = `Última atualização: ${dataAtualizacao.toLocaleString('pt-BR')}`;
             }
         } else {
-            loadingElement.style.display = 'none';
-            errorContainer.style.display = 'block';
-            errorContainer.textContent = resultado.error;
-        }
-    } catch (error) {
-        loadingElement.style.display = 'none';
-        errorContainer.style.display = 'block';
-        errorContainer.textContent = `Erro inesperado: ${error.message}`;
-    }
-}
-
-async function carregarAlunosPorMotorista() {
-    const motoristaInput = document.getElementById('motorista-search-input');
-    const nomeMotorista = motoristaInput.value.trim();
-
-    if (!nomeMotorista) {
-        showMessage(DOM.errorMessage, 'Digite um nome de motorista para pesquisar');
-        return;
-    }
-
-    try {
-        showLoading(true);
-        const resultado = await fetchAlunosPorMotorista(nomeMotorista);
-
-        if (resultado.success) {
-            DOM.loading.style.display = 'none';
-            DOM.alunosContainer.style.display = 'block';
-
-            DOM.tbody.innerHTML = resultado.alunos.map(aluno =>
-                `<tr>
-                    <td>${aluno.id || '-'}</td>
-                    <td>${aluno.nome_aluno || '-'}</td>
-                    <td>${aluno.rg || '-'}</td>
-                    <td>${formatarData(aluno.data_nasc)}</td>
-                    <td>${aluno.escola || '-'}</td>
-                    <td>${aluno.serie || '-'}</td>
-                    <td>${aluno.turno || '-'}</td>
-                </tr>`
-            ).join('');
-
-            if (resultado.timestamp) {
-                const dataAtualizacao = new Date(resultado.timestamp);
-                DOM.timestamp.textContent = `Atualizado: ${dataAtualizacao.toLocaleString('pt-BR')}`;
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (errorContainer) {
+                errorContainer.style.display = 'block';
+                errorContainer.textContent = resultado.error;
             }
-        } else {
-            showMessage(DOM.errorMessage, resultado.error);
         }
     } catch (error) {
-        showMessage(DOM.errorMessage, `Erro: ${error.message}`);
-    } finally {
-        showLoading(false);
+        if (loadingElement) loadingElement.style.display = 'none';
+        if (errorContainer) {
+            errorContainer.style.display = 'block';
+            errorContainer.textContent = `Erro inesperado: ${error.message}`;
+        }
     }
-}
+};
 
-window.addEventListener('DOMContentLoaded', carregarAlunos);
+// Inicialização automática apenas se não houver outro evento
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.carregarAlunos);
+} else {
+    window.carregarAlunos();
+}
