@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão de Alunos</title>
     <style>
+        /* Seu CSS existente permanece igual */
         :root {
             --primary-color: #3498db;
             --primary-hover: #2980b9;
@@ -393,27 +394,26 @@
     </div>
 
     <script>
+        // Configurações da API
         const API_BASE_URL = 'https://secr-educ.onrender.com';
+        
+        // Endpoints da API
+        const ENDPOINTS = {
+            alunos: '/alunos',
+            aluno: '/aluno',
+            pesquisar: '/alunos/pesquisar',
+            motorista: '/alunos/motorista',
+            health: '/health-check'  // Corrigido para corresponder ao backend
+        };
 
-// Endpoints da API (ajuste conforme sua estrutura real)
-const ENDPOINTS = {
-    alunos: '/alunos',
-    aluno: '/aluno',
-    pesquisar: '/alunos/pesquisar',
-    motorista: '/alunos/motorista',
-    health: '/health'  // Mudei de /health-check para /health
-};
         // Elementos DOM
         const DOM = {
-            // Formulário
             form: document.getElementById('aluno-form'),
             formTitle: document.getElementById('form-title'),
             formMessage: document.getElementById('form-message'),
             alunoId: document.getElementById('aluno-id'),
             submitButton: document.getElementById('submit-button'),
             cancelEditButton: document.getElementById('cancel-edit'),
-
-            // Campos do formulário
             nomeAluno: document.getElementById('nome_aluno'),
             rg: document.getElementById('rg'),
             dataNasc: document.getElementById('data_nasc'),
@@ -426,8 +426,6 @@ const ENDPOINTS = {
             ref: document.getElementById('ref'),
             motorista: document.getElementById('motorista'),
             obs: document.getElementById('obs'),
-
-            // Listagem
             alunoSearchInput: document.getElementById('aluno-search-input'),
             alunoSearchButton: document.getElementById('aluno-search-button'),
             motoristaSearchInput: document.getElementById('motorista-search-input'),
@@ -491,117 +489,97 @@ const ENDPOINTS = {
             }
         }
 
-       // Função melhorada para verificar status da API
-async function checkAPIStatus() {
-    try {
-        // Tenta endpoints comuns de health check
-        const endpointsToTry = ['/health', '/health-check', '/status', '/'];
-        
-        for (const endpoint of endpointsToTry) {
+        function handleAPIError(error) {
+            console.error('Erro na API:', error);
+            
+            let errorMessage = 'Erro ao conectar com o servidor';
+            
+            if (error.message.includes('Failed to fetch')) {
+                errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.';
+            } else if (error.message.includes('504') || error.message.includes('timeout')) {
+                errorMessage = 'O servidor está demorando para responder. Tente novamente em alguns segundos.';
+            } else {
+                errorMessage = error.message;
+            }
+            
+            showMessage(DOM.errorMessage, errorMessage);
+        }
+
+        async function fetchWithTimeout(resource, options = {}) {
+            const { timeout = 10000 } = options;
+            
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            
             try {
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 5000 // 5 segundos de timeout
+                const response = await fetch(resource, {
+                    ...options,
+                    signal: controller.signal
                 });
-                
-                if (response.ok) {
-                    console.log(`API respondendo em: ${endpoint}`);
-                    return true;
-                }
-            } catch (e) {
-                // Continua tentando outros endpoints
-                console.log(`Endpoint ${endpoint} não disponível`);
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
             }
         }
-        
-        // Se nenhum endpoint de health funcionar, tenta o endpoint principal
-        const mainResponse = await fetch(`${API_BASE_URL}${ENDPOINTS.alunos}`, {
-            method: 'HEAD',
-            timeout: 5000
-        }).catch(() => null);
-        
-        return mainResponse !== null;
-        
-    } catch (error) {
-        console.error('Erro ao conectar com a API:', error);
-        return false;
-    }
-}
 
-// Função aprimorada para lidar com timeout
-async function fetchWithTimeout(resource, options = {}) {
-    const { timeout = 8000 } = options;
-    
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    
-    try {
-        const response = await fetch(resource, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(id);
-        return response;
-    } catch (error) {
-        clearTimeout(id);
-        throw error;
-    }
-}
-
-// Inicialização melhorada
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        showLoading(true);
-        
-        // Mensagem amigável enquanto tenta conectar
-        showMessage(DOM.errorMessage, 
-            'Conectando ao servidor... Isso pode levar alguns segundos se o serviço estiver iniciando.', 
-            'success');
-        
-        // Tenta conectar com a API
-        const isAPIAvailable = await checkAPIStatus();
-        
-        if (!isAPIAvailable) {
-            showMessage(DOM.errorMessage, 
-                'O servidor está iniciando. Aguarde alguns instantes e tente novamente.\n' +
-                'Em servidores gratuitos do Render, a primeira requisição pode levar até 60 segundos.', 
-                'error');
-            
-            // Tenta novamente após 5 segundos
-            setTimeout(async () => {
-                try {
-                    await fetchAllAlunos();
-                } catch (retryError) {
-                    console.log('Tentativa de reconexão falhou:', retryError);
-                }
-            }, 5000);
-            
-            return;
+        async function checkAPIStatus() {
+            try {
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.health}`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                return response.ok;
+            } catch (error) {
+                console.log('API não disponível ainda:', error.message);
+                return false;
+            }
         }
-        
-        // Se conseguiu conectar, busca os dados
-        await fetchAllAlunos();
-        DOM.nomeAluno.focus();
-        
-    } catch (error) {
-        handleAPIError(error);
-    } finally {
-        showLoading(false);
-    }
-});
+
+        // Operações CRUD
+        async function fetchAllAlunos() {
+            try {
+                showLoading(true);
+                DOM.errorMessage.classList.add('hidden');
+
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.alunos}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 10000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                state.currentAlunos = data.data || data || [];
+                renderAlunos(state.currentAlunos);
+                updateTimestamp(data.timestamp || new Date().toISOString());
+
+            } catch (error) {
+                handleAPIError(error);
+            } finally {
+                showLoading(false);
+            }
+        }
 
         async function searchAlunosPorNome(nome) {
             try {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`${API_BASE_URL}/alunos/pesquisar`, {
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.pesquisar}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ nome: nome })
+                    body: JSON.stringify({ nome: nome }),
+                    timeout: 10000
                 });
 
                 if (!response.ok) {
@@ -626,7 +604,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`${API_BASE_URL}/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.motorista}/${encodeURIComponent(nomeMotorista)}`, {
+                    timeout: 10000
+                });
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
@@ -650,12 +630,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`${API_BASE_URL}/aluno`, {
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(alunoData)
+                    body: JSON.stringify(alunoData),
+                    timeout: 10000
                 });
 
                 if (!response.ok) {
@@ -678,12 +659,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(alunoData)
+                    body: JSON.stringify(alunoData),
+                    timeout: 10000
                 });
 
                 if (!response.ok) {
@@ -708,8 +690,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showLoading(true);
                 DOM.errorMessage.classList.add('hidden');
 
-                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
-                    method: 'DELETE'
+                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
+                    method: 'DELETE',
+                    timeout: 10000
                 });
 
                 if (!response.ok) {
@@ -774,16 +757,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 showLoading(true);
 
-                // Encontra o aluno na lista atual ou busca da API se necessário
                 let aluno = state.currentAlunos.find(a => a.id == id);
                 
                 if (!aluno) {
-                    const response = await fetch(`${API_BASE_URL}/aluno/${id}`);
+                    const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
+                        timeout: 10000
+                    });
                     if (!response.ok) throw new Error('Aluno não encontrado');
                     aluno = await response.json();
                 }
 
-                // Preenche o formulário
                 DOM.alunoId.value = aluno.id;
                 DOM.nomeAluno.value = aluno.nome_aluno || aluno.nome || '';
                 DOM.rg.value = aluno.rg || '';
@@ -798,13 +781,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 DOM.motorista.value = aluno.motorista || '';
                 DOM.obs.value = aluno.obs || '';
 
-                // Ativa modo edição
                 state.isEditing = true;
                 DOM.formTitle.textContent = 'Editar Aluno';
                 DOM.submitButton.textContent = 'Atualizar Aluno';
                 DOM.cancelEditButton.classList.remove('hidden');
 
-                // Rolagem suave para o formulário
                 document.querySelector('.left-panel').scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
@@ -867,50 +848,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         DOM.alunoSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const searchTerm = DOM.alunoSearchInput.value.trim();
-                if (searchTerm) {
-                    searchAlunosPorNome(searchTerm);
-                } else {
-                    showMessage(DOM.errorMessage, 'Digite um nome de aluno para pesquisar');
-                }
+                DOM.alunoSearchButton.click();
             }
         });
 
         DOM.motoristaSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const searchTerm = DOM.motoristaSearchInput.value.trim();
-                if (searchTerm) {
-                    searchAlunosPorMotorista(searchTerm);
-                } else {
-                    showMessage(DOM.errorMessage, 'Digite um nome de motorista para pesquisar');
-                }
+                DOM.motoristaSearchButton.click();
             }
         });
 
-        // Mantém o serviço ativo (para plano gratuito)
+        // Ping para manter o serviço ativo (usando o endpoint correto)
         setInterval(async () => {
             try {
-                await fetch(`${API_BASE_URL}/health-check`, {
+                await fetch(`${API_BASE_URL}${ENDPOINTS.health}`, {
                     method: 'HEAD'
                 });
             } catch (error) {
-                console.log('Ping para manter serviço ativo falhou:', error);
+                console.log('Ping para manter serviço ativo:', error.message);
             }
-        }, 4 * 60 * 1000); // A cada 4 minutos
+        }, 4 * 60 * 1000);
 
-        // Inicialização
+        // Inicialização única
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Ping inicial para ativar o serviço se estiver inativo
-                await fetch(`${API_BASE_URL}/health-check`).catch(() => {});
+                showLoading(true);
+                showMessage(DOM.errorMessage, 'Conectando ao servidor...', 'success');
                 
-                // Aguarda 2 segundos para o serviço iniciar
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
+                // Tenta conectar e carregar dados
                 await fetchAllAlunos();
                 DOM.nomeAluno.focus();
+                
             } catch (error) {
                 handleAPIError(error);
+            } finally {
+                showLoading(false);
             }
         });
     </script>
