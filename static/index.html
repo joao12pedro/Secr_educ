@@ -5,24 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão de Alunos</title>
     <style>
-        /* Seu CSS existente permanece igual */
-        :root {
-            --primary-color: #3498db;
-            --primary-hover: #2980b9;
-            --success-color: #2ecc71;
-            --success-hover: #27ae60;
-            --danger-color: #e74c3c;
-            --danger-hover: #c0392b;
-            --light-gray: #f2f2f2;
-            --medium-gray: #ddd;
-            --dark-gray: #7f8c8d;
-            --text-color: #333;
-            --header-color: #2c3e50;
-            --white: #fff;
-            --error-bg: #fadbd8;
-            --success-bg: #d5f5e3;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -32,27 +14,27 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: var(--text-color);
+            color: #333;
             background-color: #f9f9f9;
             padding: 20px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1600px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 30px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1200px) {
             .container {
                 grid-template-columns: 1fr;
             }
         }
 
         h1, h2 {
-            color: var(--header-color);
+            color: #2c3e50;
             margin-bottom: 20px;
         }
 
@@ -62,7 +44,7 @@
         }
 
         .card {
-            background: var(--white);
+            background: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 25px;
@@ -82,7 +64,7 @@
         input, select, textarea {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--medium-gray);
+            border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
             transition: border-color 0.3s;
@@ -90,18 +72,18 @@
 
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: #3498db;
         }
 
         button {
             padding: 12px 24px;
-            color: var(--white);
+            color: #fff;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 500;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: all 0.3s;
         }
 
         button:hover {
@@ -113,27 +95,27 @@
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
+            background-color: #3498db;
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-hover);
+            background-color: #2980b9;
         }
 
         .btn-success {
-            background-color: var(--success-color);
+            background-color: #2ecc71;
         }
 
         .btn-success:hover {
-            background-color: var(--success-hover);
+            background-color: #27ae60;
         }
 
         .btn-danger {
-            background-color: var(--danger-color);
+            background-color: #e74c3c;
         }
 
         .btn-danger:hover {
-            background-color: var(--danger-hover);
+            background-color: #c0392b;
         }
 
         .search-header {
@@ -160,34 +142,41 @@
         .total-count {
             font-size: 16px;
             font-weight: 600;
-            color: var(--header-color);
-            background-color: var(--light-gray);
+            color: #2c3e50;
+            background-color: #f2f2f2;
             padding: 10px 15px;
             border-radius: 6px;
             white-space: nowrap;
         }
 
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         th, td {
-            padding: 14px 16px;
+            padding: 12px;
             text-align: left;
-            border-bottom: 1px solid var(--medium-gray);
+            border-bottom: 1px solid #ddd;
         }
 
         th {
-            background-color: var(--primary-color);
-            color: var(--white);
+            background-color: #3498db;
+            color: #fff;
             font-weight: 600;
+            position: sticky;
+            top: 0;
         }
 
         tr:nth-child(even) {
-            background-color: var(--light-gray);
+            background-color: #f2f2f2;
         }
 
         tr:hover {
@@ -198,7 +187,7 @@
             text-align: center;
             padding: 30px;
             font-style: italic;
-            color: var(--dark-gray);
+            color: #7f8c8d;
             font-size: 18px;
         }
 
@@ -210,13 +199,21 @@
         }
 
         .error {
-            color: var(--danger-color);
-            background-color: var(--error-bg);
+            color: #e74c3c;
+            background-color: #fadbd8;
+            border-left: 4px solid #e74c3c;
         }
 
         .success {
-            color: var(--success-color);
-            background-color: var(--success-bg);
+            color: #2ecc71;
+            background-color: #d5f5e3;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
         }
 
         .hidden {
@@ -226,31 +223,37 @@
         .action-buttons {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .action-btn {
-            padding: 8px 12px;
-            font-size: 14px;
+            padding: 6px 12px;
+            font-size: 12px;
             border-radius: 4px;
         }
 
         .form-actions {
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         .info-bar {
             display: flex;
             justify-content: flex-end;
             margin-top: 20px;
-            font-size: 14px;
-            color: var(--dark-gray);
+            font-size: 12px;
+            color: #7f8c8d;
         }
 
         .required-field::after {
             content: " *";
-            color: var(--danger-color);
+            color: #e74c3c;
+        }
+
+        textarea {
+            resize: vertical;
+            font-family: inherit;
         }
     </style>
 </head>
@@ -268,37 +271,37 @@
 
                     <div class="form-group">
                         <label for="nome_aluno" class="required-field">Nome Completo</label>
-                        <input type="text" id="nome_aluno" required>
+                        <input type="text" id="nome_aluno" name="nome_aluno" required>
                     </div>
 
                     <div class="form-group">
                         <label for="rg" class="required-field">RG</label>
-                        <input type="text" id="rg" required>
+                        <input type="text" id="rg" name="rg" required>
                     </div>
 
                     <div class="form-group">
                         <label for="data_nasc" class="required-field">Data de Nascimento</label>
-                        <input type="date" id="data_nasc" required>
+                        <input type="date" id="data_nasc" name="data_nasc" required>
                     </div>
 
                     <div class="form-group">
                         <label for="nome_pai" class="required-field">Nome do Pai</label>
-                        <input type="text" id="nome_pai" required>
+                        <input type="text" id="nome_pai" name="nome_pai" required>
                     </div>
 
                     <div class="form-group">
                         <label for="nome_mae" class="required-field">Nome da Mãe</label>
-                        <input type="text" id="nome_mae" required>
+                        <input type="text" id="nome_mae" name="nome_mae" required>
                     </div>
 
                     <div class="form-group">
                         <label for="endereco" class="required-field">Endereço</label>
-                        <input type="text" id="endereco" required>
+                        <input type="text" id="endereco" name="endereco" required>
                     </div>
 
                     <div class="form-group">
                         <label for="escola" class="required-field">Escola</label>
-                        <select id="escola" required>
+                        <select id="escola" name="escola" required>
                             <option value="">Selecione...</option>
                             <option value="Estadual">Estadual</option>
                             <option value="Municipal">Municipal</option>
@@ -308,7 +311,7 @@
 
                     <div class="form-group">
                         <label for="turno" class="required-field">Turno</label>
-                        <select id="turno" required>
+                        <select id="turno" name="turno" required>
                             <option value="">Selecione...</option>
                             <option value="Matutino">Matutino</option>
                             <option value="Vespertino">Vespertino</option>
@@ -318,27 +321,27 @@
 
                     <div class="form-group">
                         <label for="serie" class="required-field">Série</label>
-                        <input type="text" id="serie" required>
+                        <input type="text" id="serie" name="serie" required>
                     </div>
 
                     <div class="form-group">
                         <label for="ref">Referência</label>
-                        <input type="text" id="ref">
+                        <input type="text" id="ref" name="ref" placeholder="Ex: Indicado por, observação interna, etc.">
                     </div>
 
                     <div class="form-group">
                         <label for="motorista">Motorista</label>
-                        <input type="text" id="motorista">
+                        <input type="text" id="motorista" name="motorista">
                     </div>
 
                     <div class="form-group">
                         <label for="obs">Observações</label>
-                        <textarea id="obs" rows="3"></textarea>
+                        <textarea id="obs" name="obs" rows="4" placeholder="Digite aqui as observações sobre o aluno..."></textarea>
                     </div>
 
                     <div class="form-actions">
                         <button type="submit" id="submit-button" class="btn-success">Cadastrar Aluno</button>
-                        <button type="button" id="cancel-edit" class="btn-danger hidden">Cancelar</button>
+                        <button type="button" id="cancel-edit" class="btn-danger hidden">Cancelar Edição</button>
                     </div>
                 </form>
             </div>
@@ -363,26 +366,31 @@
                     <div id="result-count" class="total-count">0 alunos</div>
                 </div>
 
-                <div id="loading" class="loading hidden">Carregando dados...</div>
+                <div id="loading" class="loading">Carregando dados...</div>
                 <div id="error-message" class="message error hidden"></div>
+                <div id="warning-message" class="message warning hidden"></div>
 
                 <div id="results-container">
-                    <table id="alunos-table" class="hidden">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>RG</th>
-                                <th>Nascimento</th>
-                                <th>Escola</th>
-                                <th>Série</th>
-                                <th>Turno</th>
-                                <th>Motorista</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="alunos-tbody"></tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table id="alunos-table" class="hidden">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>RG</th>
+                                    <th>Nascimento</th>
+                                    <th>Escola</th>
+                                    <th>Série</th>
+                                    <th>Turno</th>
+                                    <th>Motorista</th>
+                                    <th>Referência</th>
+                                    <th>Observações</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alunos-tbody"></tbody>
+                        </table>
+                    </div>
                     <div id="no-results" class="loading hidden">Nenhum aluno encontrado.</div>
                 </div>
 
@@ -394,17 +402,8 @@
     </div>
 
     <script>
-        // Configurações da API
+        // Configuração para LOCALHOST
         const API_BASE_URL = 'https://secr-educ.onrender.com';
-        
-        // Endpoints da API
-        const ENDPOINTS = {
-            alunos: '/alunos',
-            aluno: '/aluno',
-            pesquisar: '/alunos/pesquisar',
-            motorista: '/alunos/motorista',
-            health: '/health-check'  // Corrigido para corresponder ao backend
-        };
 
         // Elementos DOM
         const DOM = {
@@ -433,22 +432,22 @@
             showAllButton: document.getElementById('show-all-button'),
             loading: document.getElementById('loading'),
             errorMessage: document.getElementById('error-message'),
+            warningMessage: document.getElementById('warning-message'),
             table: document.getElementById('alunos-table'),
             tbody: document.getElementById('alunos-tbody'),
             noResults: document.getElementById('no-results'),
-            timestamp: document.getElementById('timestamp'),
-            alunosContainer: document.getElementById('results-container')
+            timestamp: document.getElementById('timestamp')
         };
 
-        // Estado da aplicação
-        const state = {
-            isEditing: false,
-            currentAlunos: []
-        };
+        let isEditing = false;
+        let currentAlunos = [];
 
-        // Funções auxiliares
         function showLoading(show) {
-            DOM.loading.classList.toggle('hidden', !show);
+            DOM.loading.style.display = show ? 'block' : 'none';
+            if (show) {
+                DOM.table.classList.add('hidden');
+                DOM.noResults.classList.add('hidden');
+            }
         }
 
         function showMessage(element, message, type = 'error') {
@@ -456,18 +455,27 @@
             element.className = `message ${type}`;
             element.classList.remove('hidden');
 
-            if (type !== 'error') {
-                setTimeout(() => element.classList.add('hidden'), 5000);
+            if (type === 'success') {
+                setTimeout(() => {
+                    element.classList.add('hidden');
+                }, 5000);
             }
+        }
+
+        function clearMessages() {
+            DOM.errorMessage.classList.add('hidden');
+            DOM.warningMessage.classList.add('hidden');
+            DOM.formMessage.classList.add('hidden');
         }
 
         function resetForm() {
             DOM.form.reset();
             DOM.alunoId.value = '';
-            state.isEditing = false;
+            isEditing = false;
             DOM.formTitle.textContent = 'Cadastrar Novo Aluno';
             DOM.submitButton.textContent = 'Cadastrar Aluno';
             DOM.cancelEditButton.classList.add('hidden');
+            clearMessages();
         }
 
         function formatDate(dateString) {
@@ -481,88 +489,36 @@
         }
 
         function updateTimestamp(timestamp) {
-            try {
-                const date = new Date(timestamp);
-                DOM.timestamp.textContent = `Atualizado: ${date.toLocaleString('pt-BR')}`;
-            } catch {
-                DOM.timestamp.textContent = `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+            if (timestamp) {
+                try {
+                    const date = new Date(timestamp);
+                    DOM.timestamp.textContent = `Última atualização: ${date.toLocaleString('pt-BR')}`;
+                } catch {
+                    DOM.timestamp.textContent = `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+                }
             }
         }
 
-        function handleAPIError(error) {
-            console.error('Erro na API:', error);
-            
-            let errorMessage = 'Erro ao conectar com o servidor';
-            
-            if (error.message.includes('Failed to fetch')) {
-                errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.';
-            } else if (error.message.includes('504') || error.message.includes('timeout')) {
-                errorMessage = 'O servidor está demorando para responder. Tente novamente em alguns segundos.';
-            } else {
-                errorMessage = error.message;
-            }
-            
-            showMessage(DOM.errorMessage, errorMessage);
-        }
-
-        async function fetchWithTimeout(resource, options = {}) {
-            const { timeout = 10000 } = options;
-            
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            
-            try {
-                const response = await fetch(resource, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
-            }
-        }
-
-        async function checkAPIStatus() {
-            try {
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.health}`, {
-                    method: 'GET',
-                    timeout: 5000
-                });
-                
-                return response.ok;
-            } catch (error) {
-                console.log('API não disponível ainda:', error.message);
-                return false;
-            }
-        }
-
-        // Operações CRUD
         async function fetchAllAlunos() {
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.alunos}`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 10000
-                });
-                
+                const response = await fetch(`${API_BASE_URL}/alunos`);
+
                 if (!response.ok) {
-                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                    throw new Error(`Erro ${response.status}`);
                 }
 
                 const data = await response.json();
-                state.currentAlunos = data.data || data || [];
-                renderAlunos(state.currentAlunos);
-                updateTimestamp(data.timestamp || new Date().toISOString());
+                currentAlunos = data.data || [];
+                renderAlunos(currentAlunos);
+                updateTimestamp(data.timestamp);
 
             } catch (error) {
-                handleAPIError(error);
+                console.error('Erro:', error);
+                showMessage(DOM.errorMessage, `Erro ao conectar com o servidor: ${error.message}. Verifique se o servidor Flask está rodando em ${API_BASE_URL}`);
+                DOM.errorMessage.classList.remove('hidden');
             } finally {
                 showLoading(false);
             }
@@ -571,29 +527,26 @@
         async function searchAlunosPorNome(nome) {
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.pesquisar}`, {
+                const response = await fetch(`${API_BASE_URL}/alunos/pesquisar`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ nome: nome }),
-                    timeout: 10000
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: nome })
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Erro na pesquisa por nome');
+                    throw new Error('Erro na pesquisa');
                 }
 
                 const data = await response.json();
-                state.currentAlunos = data.resultados || data.data || [];
-                renderAlunos(state.currentAlunos);
-                updateTimestamp(data.timestamp || new Date().toISOString());
+                currentAlunos = data.resultados || data.data || [];
+                renderAlunos(currentAlunos);
+                updateTimestamp(data.timestamp);
 
             } catch (error) {
-                handleAPIError(error);
+                showMessage(DOM.errorMessage, error.message);
+                DOM.errorMessage.classList.remove('hidden');
             } finally {
                 showLoading(false);
             }
@@ -602,24 +555,22 @@
         async function searchAlunosPorMotorista(nomeMotorista) {
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.motorista}/${encodeURIComponent(nomeMotorista)}`, {
-                    timeout: 10000
-                });
-                
+                const response = await fetch(`${API_BASE_URL}/alunos/motorista/${encodeURIComponent(nomeMotorista)}`);
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Erro na pesquisa por motorista');
+                    throw new Error('Erro na pesquisa');
                 }
 
                 const data = await response.json();
-                state.currentAlunos = data.data || [];
-                renderAlunos(state.currentAlunos);
-                updateTimestamp(data.timestamp || new Date().toISOString());
+                currentAlunos = data.data || [];
+                renderAlunos(currentAlunos);
+                updateTimestamp(data.timestamp);
 
             } catch (error) {
-                handleAPIError(error);
+                showMessage(DOM.errorMessage, error.message);
+                DOM.errorMessage.classList.remove('hidden');
             } finally {
                 showLoading(false);
             }
@@ -628,27 +579,26 @@
         async function createAluno(alunoData) {
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}`, {
+                const response = await fetch(`${API_BASE_URL}/aluno`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(alunoData),
-                    timeout: 10000
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(alunoData)
                 });
 
+                const result = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.erro || 'Erro ao criar aluno');
+                    throw new Error(result.erro || 'Erro ao criar aluno');
                 }
 
                 showMessage(DOM.formMessage, 'Aluno cadastrado com sucesso!', 'success');
                 resetForm();
                 await fetchAllAlunos();
+
             } catch (error) {
-                handleAPIError(error);
+                showMessage(DOM.formMessage, error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -657,27 +607,26 @@
         async function updateAluno(id, alunoData) {
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
+                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(alunoData),
-                    timeout: 10000
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(alunoData)
                 });
 
+                const result = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.erro || 'Erro ao atualizar aluno');
+                    throw new Error(result.erro || 'Erro ao atualizar aluno');
                 }
 
                 showMessage(DOM.formMessage, 'Aluno atualizado com sucesso!', 'success');
                 resetForm();
                 await fetchAllAlunos();
+
             } catch (error) {
-                handleAPIError(error);
+                showMessage(DOM.formMessage, error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -688,25 +637,61 @@
 
             try {
                 showLoading(true);
-                DOM.errorMessage.classList.add('hidden');
+                clearMessages();
 
-                const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
-                    method: 'DELETE',
-                    timeout: 10000
+                const response = await fetch(`${API_BASE_URL}/aluno/${id}`, {
+                    method: 'DELETE'
                 });
 
+                const result = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Erro ao excluir aluno');
+                    throw new Error(result.message || 'Erro ao excluir aluno');
                 }
 
                 showMessage(DOM.errorMessage, 'Aluno excluído com sucesso!', 'success');
                 await fetchAllAlunos();
+
             } catch (error) {
-                handleAPIError(error);
+                showMessage(DOM.errorMessage, error.message, 'error');
             } finally {
                 showLoading(false);
             }
+        }
+
+        // Função EDIT - usa os dados já carregados da lista
+        function editAluno(id) {
+            const aluno = currentAlunos.find(a => a.id == id);
+
+            if (!aluno) {
+                showMessage(DOM.errorMessage, 'Aluno não encontrado na lista', 'error');
+                return;
+            }
+
+            DOM.alunoId.value = aluno.id;
+            DOM.nomeAluno.value = aluno.nome_aluno || '';
+            DOM.rg.value = aluno.rg || '';
+            DOM.dataNasc.value = aluno.data_nasc ? aluno.data_nasc.split('T')[0] : '';
+            DOM.nomePai.value = aluno.nome_pai || '';
+            DOM.nomeMae.value = aluno.nome_mae || '';
+            DOM.endereco.value = aluno.endereco || '';
+            DOM.escola.value = aluno.escola || '';
+            DOM.turno.value = aluno.turno || '';
+            DOM.serie.value = aluno.serie || '';
+            DOM.ref.value = aluno.ref || '';
+            DOM.motorista.value = aluno.motorista || '';
+            DOM.obs.value = aluno.obs || '';
+
+            isEditing = true;
+            DOM.formTitle.textContent = 'Editar Aluno';
+            DOM.submitButton.textContent = 'Atualizar Aluno';
+            DOM.cancelEditButton.classList.remove('hidden');
+            clearMessages();
+
+            document.querySelector('.left-panel').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
 
         function renderAlunos(alunos) {
@@ -721,29 +706,28 @@
 
             DOM.noResults.classList.add('hidden');
             DOM.table.classList.remove('hidden');
+            document.getElementById('result-count').textContent = `${alunos.length} aluno${alunos.length !== 1 ? 's' : ''}`;
 
             alunos.forEach(aluno => {
-                const row = document.createElement('tr');
+                const row = DOM.tbody.insertRow();
                 row.innerHTML = `
                     <td>${aluno.id || '-'}</td>
-                    <td>${aluno.nome_aluno || aluno.nome || '-'}</td>
+                    <td>${aluno.nome_aluno || '-'}</td>
                     <td>${aluno.rg || '-'}</td>
-                    <td>${formatDate(aluno.data_nasc || aluno.data_nascimento)}</td>
+                    <td>${formatDate(aluno.data_nasc)}</td>
                     <td>${aluno.escola || '-'}</td>
                     <td>${aluno.serie || '-'}</td>
                     <td>${aluno.turno || '-'}</td>
                     <td>${aluno.motorista || '-'}</td>
+                    <td>${aluno.ref || '-'}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${aluno.obs || ''}">${aluno.obs || '-'}</td>
                     <td class="action-buttons">
                         <button class="action-btn btn-primary edit-btn" data-id="${aluno.id}">Editar</button>
                         <button class="action-btn btn-danger delete-btn" data-id="${aluno.id}">Excluir</button>
                     </td>
                 `;
-                DOM.tbody.appendChild(row);
             });
 
-            document.getElementById('result-count').textContent = `${alunos.length} aluno${alunos.length !== 1 ? 's' : ''}`;
-
-            // Adiciona eventos aos botões de ação
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => editAluno(btn.dataset.id));
             });
@@ -753,72 +737,27 @@
             });
         }
 
-        async function editAluno(id) {
-            try {
-                showLoading(true);
-
-                let aluno = state.currentAlunos.find(a => a.id == id);
-                
-                if (!aluno) {
-                    const response = await fetchWithTimeout(`${API_BASE_URL}${ENDPOINTS.aluno}/${id}`, {
-                        timeout: 10000
-                    });
-                    if (!response.ok) throw new Error('Aluno não encontrado');
-                    aluno = await response.json();
-                }
-
-                DOM.alunoId.value = aluno.id;
-                DOM.nomeAluno.value = aluno.nome_aluno || aluno.nome || '';
-                DOM.rg.value = aluno.rg || '';
-                DOM.dataNasc.value = aluno.data_nasc ? aluno.data_nasc.split('T')[0] : '';
-                DOM.nomePai.value = aluno.nome_pai || '';
-                DOM.nomeMae.value = aluno.nome_mae || '';
-                DOM.endereco.value = aluno.endereco || '';
-                DOM.escola.value = aluno.escola || '';
-                DOM.turno.value = aluno.turno || '';
-                DOM.serie.value = aluno.serie || '';
-                DOM.ref.value = aluno.ref || '';
-                DOM.motorista.value = aluno.motorista || '';
-                DOM.obs.value = aluno.obs || '';
-
-                state.isEditing = true;
-                DOM.formTitle.textContent = 'Editar Aluno';
-                DOM.submitButton.textContent = 'Atualizar Aluno';
-                DOM.cancelEditButton.classList.remove('hidden');
-
-                document.querySelector('.left-panel').scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-
-            } catch (error) {
-                handleAPIError(error);
-            } finally {
-                showLoading(false);
-            }
-        }
-
         // Event Listeners
         DOM.form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const alunoData = {
-                nome_aluno: DOM.nomeAluno.value,
-                rg: DOM.rg.value,
+                nome_aluno: DOM.nomeAluno.value.trim(),
+                rg: DOM.rg.value.trim(),
                 data_nasc: DOM.dataNasc.value,
-                nome_pai: DOM.nomePai.value,
-                nome_mae: DOM.nomeMae.value,
-                endereco: DOM.endereco.value,
+                nome_pai: DOM.nomePai.value.trim(),
+                nome_mae: DOM.nomeMae.value.trim(),
+                endereco: DOM.endereco.value.trim(),
                 escola: DOM.escola.value,
                 turno: DOM.turno.value,
-                serie: DOM.serie.value,
-                ref: DOM.ref.value || undefined,
-                motorista: DOM.motorista.value || undefined,
-                obs: DOM.obs.value || undefined
+                serie: DOM.serie.value.trim(),
+                ref: DOM.ref.value.trim() || undefined,
+                motorista: DOM.motorista.value.trim() || undefined,
+                obs: DOM.obs.value.trim() || undefined
             };
 
-            if (state.isEditing) {
-                await updateAluno(DOM.alunoId.value, alunoData);
+            if (isEditing) {
+                await updateAluno(parseInt(DOM.alunoId.value), alunoData);
             } else {
                 await createAluno(alunoData);
             }
@@ -827,20 +766,20 @@
         DOM.cancelEditButton.addEventListener('click', resetForm);
 
         DOM.alunoSearchButton.addEventListener('click', () => {
-            const searchTerm = DOM.alunoSearchInput.value.trim();
-            if (searchTerm) {
-                searchAlunosPorNome(searchTerm);
+            const term = DOM.alunoSearchInput.value.trim();
+            if (term) {
+                searchAlunosPorNome(term);
             } else {
-                showMessage(DOM.errorMessage, 'Digite um nome de aluno para pesquisar');
+                showMessage(DOM.errorMessage, 'Digite um nome para pesquisar');
             }
         });
 
         DOM.motoristaSearchButton.addEventListener('click', () => {
-            const searchTerm = DOM.motoristaSearchInput.value.trim();
-            if (searchTerm) {
-                searchAlunosPorMotorista(searchTerm);
+            const term = DOM.motoristaSearchInput.value.trim();
+            if (term) {
+                searchAlunosPorMotorista(term);
             } else {
-                showMessage(DOM.errorMessage, 'Digite um nome de motorista para pesquisar');
+                showMessage(DOM.errorMessage, 'Digite um nome de motorista');
             }
         });
 
@@ -848,42 +787,22 @@
 
         DOM.alunoSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                DOM.alunoSearchButton.click();
+                const term = DOM.alunoSearchInput.value.trim();
+                if (term) searchAlunosPorNome(term);
             }
         });
 
         DOM.motoristaSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                DOM.motoristaSearchButton.click();
+                const term = DOM.motoristaSearchInput.value.trim();
+                if (term) searchAlunosPorMotorista(term);
             }
         });
 
-        // Ping para manter o serviço ativo (usando o endpoint correto)
-        setInterval(async () => {
-            try {
-                await fetch(`${API_BASE_URL}${ENDPOINTS.health}`, {
-                    method: 'HEAD'
-                });
-            } catch (error) {
-                console.log('Ping para manter serviço ativo:', error.message);
-            }
-        }, 4 * 60 * 1000);
-
-        // Inicialização única
+        // Inicialização
         document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                showLoading(true);
-                showMessage(DOM.errorMessage, 'Conectando ao servidor...', 'success');
-                
-                // Tenta conectar e carregar dados
-                await fetchAllAlunos();
-                DOM.nomeAluno.focus();
-                
-            } catch (error) {
-                handleAPIError(error);
-            } finally {
-                showLoading(false);
-            }
+            await fetchAllAlunos();
+            DOM.nomeAluno.focus();
         });
     </script>
 </body>
